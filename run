@@ -1,0 +1,29 @@
+#!/bin/bash
+
+LIBS=/src/libs/*
+
+HADOOP_JARS=`ls $LIBS | sed ':a;N;$!ba;s/\n/:/g'`
+
+HBASE_LIBS_1=/usr/lib/hbase/*.jar
+HBASE_JARS_1=`ls $HBASE_LIBS_1 | sed ':a;N;$!ba;s/\n/:/g'`
+HBASE_LIBS_2=/usr/lib/hbase/lib/*.jar
+HBASE_JARS_2=`ls $HBASE_LIBS_2 | sed ':a;N;$!ba;s/\n/:/g'`
+
+export JAVA_HOME=/usr/java/jdk1.7.0_67-cloudera
+export HADOOP_CLASSPATH=${JAVA_HOME}/lib/tools.jar:$HADOOP_JARS:$HBASE_JARS_1:$HBASE_JARS_2
+
+LIBJARS=`echo ${HADOOP_JARS} | sed s/:/,/g`
+HBASE_LIB_JARS_1=`echo ${HBASE_JARS_1} | sed s/:/,/g`
+HBASE_LIB_JARS_2=`echo ${HBASE_JARS_2} | sed s/:/,/g`
+LIBJARS=$LIBJARS,$HBASE_LIB_JARS_1,$HBASE_LIB_JARS_2
+# hadoop fs -rm -r -f $1/output.$2
+
+hadoop jar target/lab.jar bdt.$1 -libjars $LIBJARS
+# hadoop jar target/lab.jar bdt.$2 -libjars $LIBJARS  $1/input $1/output.$2 $3
+
+
+# hadoop jar target/app.jar $1 -fs local $2 $3
+# hadoop jar target/app.jar $1 file:///src/$2 file:///src/$3
+
+# remove all
+# hadoop fs -rm -r -f output*
