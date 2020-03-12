@@ -20,21 +20,24 @@ import lombok.var;
 
 public class ApacheLog extends Configured implements Tool {
 
-	public static class MyMapper extends Mapper<LongWritable, Text, Text, DoubleWritable> {
+	public static class MyMapper
+			extends Mapper<LongWritable, Text, Text, DoubleWritable> {
 
-		private final String regex = "^(\\S+) (\\S+) (\\S+) " +
+				private final String regex = "^(\\S+) (\\S+) (\\S+) " +
                "\\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(\\S+)" +
                " (\\S+)\\s*(\\S+)?\\s*\" (\\d{3}) (\\S+)";
-		private final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
 
-		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+			   private final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
 
+		public void map(LongWritable key, Text value, Context ctx)
+				throws IOException, InterruptedException
+		{
 			Matcher matcher = pattern.matcher(value.toString());
 			while (matcher.find()) {
 				try {
 					String ip = matcher.group(1);
 					var q = Double.parseDouble(matcher.group(9));
-					context.write(new Text(ip), new DoubleWritable(q));
+					ctx.write(new Text(ip), new DoubleWritable(q));
 				} catch (NumberFormatException  ex) {
 				}
 			}
@@ -44,27 +47,17 @@ public class ApacheLog extends Configured implements Tool {
 
 	public static class MyReducer extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
 
-		public void reduce(Text key, Iterable<DoubleWritable> values, Context context)
-				throws IOException, InterruptedException {
+		public void reduce(Text key, Iterable<DoubleWritable> values, Context ctx)
+				throws IOException, InterruptedException
+		{
 			long sum = 0;
 			long cnt = 0;
 			for (var val : values) {
 				sum += val.get();
 				cnt += 1.0;
 			}
-			context.write(key, new DoubleWritable(sum/cnt));
+			ctx.write(key, new DoubleWritable(sum/cnt));
 		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		if (args.length < 2) {
-			System.out.println("Missing parameters");
-			return;
-		}
-		Configuration conf = new Configuration();
-		FileSystem.get(conf).delete(new Path(args[1]), true);
-		int res = ToolRunner.run(conf, new ApacheLog(), args);
-		System.exit(res);
 	}
 
 	@Override
@@ -86,6 +79,17 @@ public class ApacheLog extends Configured implements Tool {
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 		return job.waitForCompletion(true) ? 0 : 1;
+	}
+
+	public static void main(String[] args) throws Exception {
+		if (args.length < 2) {
+			System.out.println("Missing parameters");
+			return;
+		}
+		Configuration conf = new Configuration();
+		FileSystem.get(conf).delete(new Path(args[1]), true);
+		int res = ToolRunner.run(conf, new ApacheLog(), args);
+		System.exit(res);
 	}
 
 }

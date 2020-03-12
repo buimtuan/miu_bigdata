@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
@@ -27,11 +28,11 @@ public class WordCount extends Configured implements Tool {
 		private Map<String, Integer> map;
 
 		@Override
-		protected void setup(Context context) {
+		protected void setup(Context ctx) {
 			map = new HashMap<String, Integer>();
 		}
 
-		public void map(LongWritable key, Text value, Context context) {
+		public void map(LongWritable key, Text value, Context ctx) {
 			String line = value.toString();
 			StringTokenizer tokenizer = new StringTokenizer(line);
 			Integer sum;
@@ -48,34 +49,28 @@ public class WordCount extends Configured implements Tool {
 		}
 
 		@Override
-		protected void cleanup(Context context) throws IOException, InterruptedException {
+		protected void cleanup(Context ctx) throws IOException, InterruptedException {
 			var word = new Text();
 			var sum = new IntWritable();
 			for (String k : map.keySet()) {
 				word.set(k);
 				sum.set(map.get(k));
-				context.write(word, sum);
+				ctx.write(word, sum);
 			}
 		}
 	}
 
 	public static class MyReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
 
-		public void reduce(Text key, Iterable<IntWritable> values, Context context)
+		public void reduce(Text key, Iterable<IntWritable> values, Context ctx)
 				throws IOException, InterruptedException {
 			log.info("reducer run");
 			int sum = 0;
 			for (IntWritable val : values) {
 				sum += val.get();
 			}
-			context.write(key, new IntWritable(sum));
+			ctx.write(key, new IntWritable(sum));
 		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		Configuration conf = new Configuration();
-		int res = ToolRunner.run(conf, new WordCount(), args);
-		System.exit(res);
 	}
 
 	@Override
@@ -97,6 +92,17 @@ public class WordCount extends Configured implements Tool {
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 		return job.waitForCompletion(true) ? 0 : 1;
+	}
+
+	public static void main(String[] args) throws Exception {
+		if (args.length < 2) {
+			System.out.println("Missing parameters");
+			return;
+		}
+		Configuration conf = new Configuration();
+		FileSystem.get(conf).delete(new Path(args[1]), true);
+		int res = ToolRunner.run(conf, new WordCount(), args);
+		System.exit(res);
 	}
 
 }

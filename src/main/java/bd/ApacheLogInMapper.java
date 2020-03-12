@@ -8,8 +8,6 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.giraph.writable.tuple.PairWritable;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.*;
@@ -26,7 +24,7 @@ public class ApacheLogInMapper extends Configured implements Tool {
 
 	public static class MyMapper extends Mapper<LongWritable, Text, Text, PairWritable<DoubleWritable, IntWritable>> {
 
-		private Map<String, MutablePair<Double, Integer>> map;
+		private Map<String, Pair<Double, Integer>> map;
 
 		private final String regex = "^(\\S+) (\\S+) (\\S+) " +
                "\\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(\\S+)" +
@@ -34,10 +32,10 @@ public class ApacheLogInMapper extends Configured implements Tool {
 		private final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
 
 		@Override
-		protected void setup(Context context)  {
-			map = new HashMap<String, MutablePair<Double, Integer>>();
+		protected void setup(Context ctx)  {
+			map = new HashMap<String, Pair<Double, Integer>>();
 		}
-		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+		public void map(LongWritable key, Text value, Context ctx) {
 
 			Matcher matcher = pattern.matcher(value.toString());
 			while (matcher.find()) {
@@ -50,7 +48,7 @@ public class ApacheLogInMapper extends Configured implements Tool {
 						d.setRight(d.getRight() + 1);
 						map.put(ip, d);
 					} else {
-						map.put(ip, new MutablePair<>(q, 1));
+						map.put(ip, new Pair<>(q, 1));
 					}
 				} catch (NumberFormatException  ex) {
 				}
@@ -58,10 +56,10 @@ public class ApacheLogInMapper extends Configured implements Tool {
 		}
 
 		@Override
-		protected void cleanup(Context context) throws IOException, InterruptedException {
+		protected void cleanup(Context ctx) throws IOException, InterruptedException {
 			for (String k : map.keySet()) {
 				var d = map.get(k);
-				context.write(new Text(k), new PairWritable<DoubleWritable, IntWritable>(
+				ctx.write(new Text(k), new PairWritable<DoubleWritable, IntWritable>(
 					new DoubleWritable(d.getLeft()), new IntWritable(d.getRight())));
 			}
 		}
@@ -69,7 +67,7 @@ public class ApacheLogInMapper extends Configured implements Tool {
 
 	public static class MyReducer extends Reducer<Text, PairWritable<DoubleWritable, IntWritable>, Text, DoubleWritable> {
 
-		public void reduce(Text key, Iterable<PairWritable<DoubleWritable, IntWritable>> values, Context context)
+		public void reduce(Text key, Iterable<PairWritable<DoubleWritable, IntWritable>> values, Context ctx)
 				throws IOException, InterruptedException {
 			double sum = 0.0;
 			double cnt = 0.0;
@@ -77,19 +75,8 @@ public class ApacheLogInMapper extends Configured implements Tool {
 				sum += val.getLeft().get();
 				cnt += val.getRight().get();
 			}
-			context.write(key, new DoubleWritable(sum/cnt));
+			ctx.write(key, new DoubleWritable(sum/cnt));
 		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		if (args.length < 2) {
-			System.out.println("Missing parameters");
-			return;
-		}
-		Configuration conf = new Configuration();
-		FileSystem.get(conf).delete(new Path(args[1]), true);
-		int res = ToolRunner.run(conf, new ApacheLog(), args);
-		System.exit(res);
 	}
 
 	@Override
@@ -111,6 +98,17 @@ public class ApacheLogInMapper extends Configured implements Tool {
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 		return job.waitForCompletion(true) ? 0 : 1;
+	}
+
+	public static void main(String[] args) throws Exception {
+		if (args.length < 2) {
+			System.out.println("Missing parameters");
+			return;
+		}
+		Configuration conf = new Configuration();
+		FileSystem.get(conf).delete(new Path(args[1]), true);
+		int res = ToolRunner.run(conf, new ApacheLog(), args);
+		System.exit(res);
 	}
 
 }
