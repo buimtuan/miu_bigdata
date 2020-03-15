@@ -16,8 +16,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import lombok.var;
-
 public class ApacheLog extends Configured implements Tool {
 
 	public static class MyMapper
@@ -36,7 +34,7 @@ public class ApacheLog extends Configured implements Tool {
 			while (matcher.find()) {
 				try {
 					String ip = matcher.group(1);
-					var q = Double.parseDouble(matcher.group(9));
+					double q = Double.parseDouble(matcher.group(9));
 					ctx.write(new Text(ip), new DoubleWritable(q));
 				} catch (NumberFormatException  ex) {
 				}
@@ -52,7 +50,7 @@ public class ApacheLog extends Configured implements Tool {
 		{
 			long sum = 0;
 			long cnt = 0;
-			for (var val : values) {
+			for (DoubleWritable val : values) {
 				sum += val.get();
 				cnt += 1.0;
 			}

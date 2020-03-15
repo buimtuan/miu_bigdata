@@ -18,8 +18,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import lombok.var;
-
 public class ApacheLogInMapper extends Configured implements Tool {
 
 	public static class MyMapper extends Mapper<LongWritable, Text, Text, PairWritable<DoubleWritable, IntWritable>> {
@@ -41,9 +39,9 @@ public class ApacheLogInMapper extends Configured implements Tool {
 			while (matcher.find()) {
 				try {
 					String ip = matcher.group(1);
-					var q = Double.parseDouble(matcher.group(9));
+					double q = Double.parseDouble(matcher.group(9));
 					if (map.containsKey(ip)) {
-						var d = map.get(ip);
+						Pair<Double, Integer> d = map.get(ip);
 						d.setLeft(d.getLeft() + q);
 						d.setRight(d.getRight() + 1);
 						map.put(ip, d);
@@ -58,7 +56,7 @@ public class ApacheLogInMapper extends Configured implements Tool {
 		@Override
 		protected void cleanup(Context ctx) throws IOException, InterruptedException {
 			for (String k : map.keySet()) {
-				var d = map.get(k);
+				Pair<Double, Integer> d = map.get(k);
 				ctx.write(new Text(k), new PairWritable<DoubleWritable, IntWritable>(
 					new DoubleWritable(d.getLeft()), new IntWritable(d.getRight())));
 			}
@@ -71,7 +69,7 @@ public class ApacheLogInMapper extends Configured implements Tool {
 				throws IOException, InterruptedException {
 			double sum = 0.0;
 			double cnt = 0.0;
-			for (var val : values) {
+			for (PairWritable<DoubleWritable, IntWritable> val : values) {
 				sum += val.getLeft().get();
 				cnt += val.getRight().get();
 			}

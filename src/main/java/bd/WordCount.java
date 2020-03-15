@@ -17,10 +17,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import lombok.var;
-import lombok.extern.log4j.Log4j;
-
-@Log4j
 public class WordCount extends Configured implements Tool {
 
 	public static class MyMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
@@ -50,8 +46,8 @@ public class WordCount extends Configured implements Tool {
 
 		@Override
 		protected void cleanup(Context ctx) throws IOException, InterruptedException {
-			var word = new Text();
-			var sum = new IntWritable();
+			Text word = new Text();
+			IntWritable sum = new IntWritable();
 			for (String k : map.keySet()) {
 				word.set(k);
 				sum.set(map.get(k));
@@ -64,7 +60,6 @@ public class WordCount extends Configured implements Tool {
 
 		public void reduce(Text key, Iterable<IntWritable> values, Context ctx)
 				throws IOException, InterruptedException {
-			log.info("reducer run");
 			int sum = 0;
 			for (IntWritable val : values) {
 				sum += val.get();
