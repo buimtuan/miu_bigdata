@@ -2,19 +2,18 @@ package bd;
 
 import java.util.Objects;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class Pair<K, V> {
 
 	protected K left;
 	protected V right;
+
+	public Pair() {
+	}
+
+	public Pair(K left, V right) {
+		this.left = left;
+		this.right = right;
+	}
 
 	public static <K, V> Pair<K, V> of (K left, V right) {
 		Pair<K, V> p = new Pair<K,V>(left, right);
@@ -44,5 +43,23 @@ public class Pair<K, V> {
 		}
 		return false;
 	}
+
+
+	public K getLeft() {
+		return this.left;
+	}
+
+	public void setLeft(K left) {
+		this.left = left;
+	}
+
+	public V getRight() {
+		return this.right;
+	}
+
+	public void setRight(V right) {
+		this.right = right;
+	}
+
 
 }
