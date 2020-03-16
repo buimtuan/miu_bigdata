@@ -3,7 +3,6 @@ package bd;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.Writable;
@@ -45,12 +44,12 @@ public class ArrayOfMap extends ArrayWritable {
 
 	public String toString() {
 		Writable[] mwArr = get();
-		StringJoiner sj = new StringJoiner(",");
+		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < mwArr.length; i++) {
 			MyMap mw = (MyMap)mwArr[i];
-			sj.add(mw.toString());
+			sb.append(mw.toString());
 		}
-		return "( " + sj.toString() + " )";
+		return "( " + sb.toString() + " )";
 	  }
 
 }

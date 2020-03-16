@@ -1,7 +1,6 @@
 package bd;
 
 import java.util.Map;
-import java.util.StringJoiner;
 
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -28,11 +27,11 @@ public class MyMap extends MapWritable {
 	}
 
 	public String toString() {
-		StringJoiner subSj = new StringJoiner(", ");
+		StringBuilder sb = new StringBuilder();
 		for (Writable k : keySet()) {
-			subSj.add(k.toString() + ": " + get(k).toString());
+			sb.append(k.toString() + ": " + get(k).toString() + ", ");
 		}
-		return "{ " + subSj.toString() + " }";
+		return "{ " + sb.toString() + " }";
 	}
 
 }
